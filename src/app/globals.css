@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Sleeky brand tokens (developer brief, section 2.2), shared with the website. */
+@theme {
+  --color-ink: #070b10;
+  --color-ink-raised: #0a1016;
+  --color-surface: #0e151d;
+  --color-chip: #13202b;
+  --color-line: #1c2733;
+  --color-slate: #2c3e50;
+  --color-green: #58d68d;
+  --color-green-hover: #7fe3a8;
+  --color-green-deep: #0f2219;
+  --color-muted: #9aa7b4;
+  --color-soft: #b7c2cc;
+  --color-faint: #6f7d8a;
+  --color-danger: #ff8a8a;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-archivo), var(--font-inter), sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: #ffffff;
+}
+
+::selection {
+  background: var(--color-green);
+  color: var(--color-ink);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: 3px;
+}
