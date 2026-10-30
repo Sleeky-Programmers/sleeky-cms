@@ -18,7 +18,10 @@ export type CurrentUser = {
  * Cached per request, so several components can call it cheaply.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  const session = await auth().api.getSession({ headers: await headers() });
+  // Read the request headers before touching auth(): this is what tells Next.js
+  // the rest is request-time work, so builds never need runtime secrets.
+  const requestHeaders = await headers();
+  const session = await auth().api.getSession({ headers: requestHeaders });
   if (!session || session.user.banned) return null;
   const { id, name, email, role } = session.user;
   return { id, name, email, role: isRole(role) ? role : "editor" };
