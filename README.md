@@ -1,6 +1,6 @@
 # Sleeky CMS
 
-Content management for [sleekyprogrammers.com](https://sleekyprogrammers.com): Insights articles, case studies and page content, edited by the Sleeky team without a developer.
+Content management for [sleekyprogrammers.com](https://sleekyprogrammers.com): Insights articles, case studies and page content, edited by the Sleeky team.
 
 Built with Next.js 16 (App Router, Cache Components), TypeScript and Tailwind CSS, using the same brand tokens and fonts as the website. Data lives in MongoDB; sign-in uses [Better Auth](https://www.better-auth.com).
 
