@@ -58,6 +58,26 @@ Read-only and unauthenticated; only published articles, no internal fields.
 
 When an article is published, updated or unpublished, the CMS POSTs `{ "type": "insights", "slugs": [...] }` to `WEBSITE_REVALIDATE_URL` with `Authorization: Bearer <REVALIDATE_SECRET>`, so the website can refresh its cache right away.
 
+## Page content
+
+Everyone signed in can edit the website's own text from **Pages**: the homepage, About, Privacy policy, the six service pages, and **Site settings** (contact details, address, social links and footer text shared by every page).
+
+- Every page starts with the **website's current text**. Only pages someone has edited are stored; the list shows *Edited* or *Original text*.
+- **Saving goes live straight away.** There are no drafts for page text. *Reset to original text* discards all edits to that page.
+- Each field has limits that match the design (character counts, number of list items), so edits can't break the layout. Some lists need an exact number of entries, e.g. the four homepage process steps.
+- In **headings**, each new line is a new line on the website, and `*words between asterisks*` are shown in the green accent colour.
+- Phone and WhatsApp numbers use the international format (`+2349160952000` for phone, `2349160952000` for WhatsApp). Links must start with `http://` or `https://`.
+- Same safeguards as articles: if someone else saved the page after you opened it, your save is refused; rich text (the privacy policy) is cleaned on save.
+
+Page keys: `home`, `about`, `privacy-policy`, `site`, and `service-<slug>` for each service (`service-websites`, `service-business-automation`, …).
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/public/pages` | `{ pages: [...] }`: key, title, group, websitePath, updatedAt |
+| `GET /api/public/pages/<key>` | `{ page }`: key, updatedAt and `content` (rich text as `{ html }`), or 404 |
+
+After a save or reset, the CMS POSTs `{ "type": "pages", "slugs": ["<key>"] }` to `WEBSITE_REVALIDATE_URL`, the same way as for articles.
+
 ## Environment variables
 
 See [`.env.example`](.env.example). Summary:
@@ -69,7 +89,7 @@ See [`.env.example`](.env.example). Summary:
 | `BETTER_AUTH_SECRET` | Yes | Signs sessions; at least 32 random characters, different per environment |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM` | In production | SMTP for invite and reset emails. In development, emails are printed to the terminal instead |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Article image uploads (Cloudinary console > Settings > API Keys) |
-| `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles change (see above) |
+| `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles or pages change (see above) |
 | `MONGODB_DNS_SERVERS` | No | Only for machines whose DNS refuses `mongodb+srv` lookups (`querySrv ECONNREFUSED`), e.g. `1.1.1.1,8.8.8.8` |
 | `MONGODB_DB` | No | Overrides the database name (used by tests) |
 
@@ -91,13 +111,15 @@ See [`.env.example`](.env.example). Summary:
 src/
   app/
     (auth)/        Public screens: sign-in, forgot/reset password, accept invite
-    (cms)/         Signed-in area: dashboard, insights, users (admins)
+    (cms)/         Signed-in area: dashboard, insights, pages, users (admins)
     api/auth/      Better Auth endpoints
     api/public/    Read-only published content for the website
-  components/      UI, auth forms, article editor, users management
+  components/      UI, auth forms, article editor, page editor, users management
   lib/
     auth/          Better Auth config, roles and permissions
     insights/      Articles: storage, validation, body sanitizing and HTML rendering
+    pages/         Page content: field schemas, the website's original text, validation, storage
+    revalidate.ts  Website refresh ping
     images.ts      Cloudinary settings and image checks
     session.ts     Data Access Layer: the only place sessions are read and checked
     invitations.ts Invite lifecycle (create, renew, revoke, accept)

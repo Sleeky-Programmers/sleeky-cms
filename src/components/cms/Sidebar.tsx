@@ -36,6 +36,19 @@ const icons = {
             <path d="M14 3v5h5M9 13h7M9 17h5" />
         </svg>
     ),
+    pages: (
+        <svg {...iconProps}>
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M3 9h18M8 13h8M8 16h5" />
+        </svg>
+    ),
+    settings: (
+        <svg {...iconProps}>
+            <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+            <circle cx="16" cy="7" r="2" />
+            <circle cx="10" cy="17" r="2" />
+        </svg>
+    ),
     users: (
         <svg {...iconProps}>
             <circle cx="9" cy="8" r="3.5" />
@@ -51,11 +64,24 @@ type NavSection = { title?: string; items: NavItem[] };
 // Add new CMS features here (e.g. case studies under Content).
 const SECTIONS: NavSection[] = [
     { items: [{ href: "/", label: "Dashboard", icon: "dashboard" }] },
-    { title: "Content", items: [{ href: "/insights", label: "Insights", icon: "insights" }] },
+    {
+        title: "Content",
+        items: [
+            { href: "/insights", label: "Insights", icon: "insights" },
+            { href: "/pages", label: "Pages", icon: "pages" },
+            { href: "/pages/site", label: "Site settings", icon: "settings" },
+        ],
+    },
     { title: "Admin", items: [{ href: "/users", label: "Users", icon: "users", adminOnly: true }] },
 ];
 
-const isCurrent = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+const matches = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+
+/** The most specific link for this page (e.g. "Site settings" rather than "Pages" on /pages/site). */
+const currentHref = (pathname: string) =>
+    SECTIONS.flatMap((section) => section.items)
+        .filter((item) => matches(pathname, item.href))
+        .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
 function Brand() {
     return (
@@ -87,7 +113,7 @@ function SidebarContent({ user, onNavigate }: { user: SidebarUser; onNavigate?: 
                         )}
                         <ul className="space-y-1">
                             {section.items.map((item) => {
-                                const current = isCurrent(pathname, item.href);
+                                const current = item.href === currentHref(pathname);
                                 return (
                                     <li key={item.href}>
                                         <Link
