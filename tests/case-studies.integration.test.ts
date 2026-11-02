@@ -48,6 +48,9 @@ describe.skipIf(!process.env.MONGODB_URI)("case studies (MongoDB)", () => {
     const { caseStudy: draft } = await store.saveCaseStudy({ slug: "", content }, "save", editor);
     expect(draft).toMatchObject({ slug: "acme-logistics", status: "draft" });
     expect(await store.getPublishedCaseStudy("acme-logistics")).toBeNull();
+    // Drafts can still be previewed in the CMS.
+    expect(await store.previewCaseStudy(draft.id)).toMatchObject({ client: "Acme Logistics", status: "draft" });
+    expect(await store.previewCaseStudy("not-an-id")).toBeNull();
 
     await expect(store.saveCaseStudy({ ...draft, content: draft.content }, "publish", editor)).rejects.toMatchObject({
       code: "invalid",

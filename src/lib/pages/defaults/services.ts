@@ -91,9 +91,9 @@ export const serviceFields: Field[] = [
     type: "group",
     key: "related",
     label: "Related work",
-    hint: "Leave the case study empty to hide this section.",
+    hint: "Choose “None” to hide this section.",
     fields: [
-      { type: "text", key: "caseStudy", label: "Case study", max: 80, hint: "The case study's address, e.g. votely or tiqwa-travels." },
+      { type: "caseStudy", key: "caseStudy", label: "Case study" },
       { type: "textarea", key: "blurb", label: "Short description", max: 200, rows: 2 },
     ],
   },

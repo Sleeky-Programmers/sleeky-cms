@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withDefaults, type Field } from "./fields";
+import { withCaseStudyOptions, withDefaults, type Field } from "./fields";
 import { PAGES, getPageDefinition } from "./registry";
 import { validatePage } from "./validate";
 
@@ -97,6 +97,34 @@ describe("validatePage", () => {
       faqs: { items: Array.from({ length: 4 }, () => ({ q: "q", a: "" })) },
     });
     expect(result.ok ? {} : result.errors).toEqual({ "steps.0": "Use at most 5 characters.", "faqs.items": "At most 3." });
+  });
+});
+
+describe("case study fields", () => {
+  const related: Field[] = [{ type: "group", key: "related", label: "Related", fields: [{ type: "caseStudy", key: "caseStudy", label: "Case study" }] }];
+
+  it("accepts a web address or none, and rejects anything else", () => {
+    expect(validatePage(related, { related: { caseStudy: "votely" } }).ok).toBe(true);
+    expect(validatePage(related, { related: { caseStudy: "" } }).ok).toBe(true);
+    expect(validatePage(related, { related: { caseStudy: "Not A Slug" } })).toEqual({
+      ok: false,
+      errors: { "related.caseStudy": "Choose a case study from the list." },
+    });
+  });
+
+  it("fills in the choices inside groups and lists", () => {
+    const options = [{ value: "votely", label: "Votely" }];
+    const [group] = withCaseStudyOptions(related, options);
+    expect(group.type === "group" && group.fields[0]).toMatchObject({ type: "caseStudy", options });
+    // The shared definitions are left untouched.
+    expect(related[0].type === "group" && related[0].fields[0]).not.toHaveProperty("options");
+  });
+
+  it("is used for every service page's related work", () => {
+    for (const page of PAGES.filter((definition) => definition.key.startsWith("service-"))) {
+      const group = page.fields.find((field) => field.key === "related");
+      expect(group?.type === "group" && group.fields.find((field) => field.key === "caseStudy")?.type).toBe("caseStudy");
+    }
   });
 });
 

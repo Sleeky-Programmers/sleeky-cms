@@ -10,7 +10,11 @@ export type StoredImage = {
   alt: string;
 };
 
-export const IMAGE_FOLDER = "sleeky-cms/insights";
+/** Each kind of content uploads into its own Cloudinary folder, e.g. sleeky-cms/case-studies. */
+export const IMAGE_AREAS = ["insights", "case-studies", "pages"] as const;
+export type ImageArea = (typeof IMAGE_AREAS)[number];
+export const imageFolder = (area: ImageArea) => `sleeky-cms/${area}`;
+export const isImageArea = (value: unknown): value is ImageArea => IMAGE_AREAS.includes(value as ImageArea);
 export const IMAGE_FORMATS = ["jpg", "jpeg", "png", "webp", "gif", "avif"];
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 

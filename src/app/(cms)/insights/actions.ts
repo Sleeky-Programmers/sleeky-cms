@@ -2,8 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
-import { cloudinaryConfig, IMAGE_FOLDER, IMAGE_FORMATS } from "@/lib/images";
 import { ArticleError, deleteArticle, saveArticle, type Article, type SaveIntent } from "@/lib/insights/articles";
 import { refreshWebsite } from "@/lib/revalidate";
 import { requireUser } from "@/lib/session";
@@ -53,26 +51,4 @@ export async function deleteArticleAction(id: string): Promise<{ ok: false; mess
     throw error;
   }
   redirect("/insights?deleted=1");
-}
-
-export type UploadTicket =
-  | { ok: true; cloudName: string; apiKey: string; timestamp: number; signature: string; folder: string; allowedFormats: string }
-  | { ok: false; message: string };
-
-/**
- * Signs a direct browser-to-Cloudinary upload. Only signed-in users get a
- * signature, and it pins the folder and allowed formats.
- */
-export async function getUploadTicket(): Promise<UploadTicket> {
-  await requireUser();
-  const config = cloudinaryConfig();
-  if (!config) return { ok: false, message: "Images aren't set up yet. Add the Cloudinary settings to the CMS." };
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const allowedFormats = IMAGE_FORMATS.join(",");
-  const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder: IMAGE_FOLDER, allowed_formats: allowedFormats },
-    config.apiSecret,
-  );
-  return { ok: true, cloudName: config.cloudName, apiKey: config.apiKey, timestamp, signature, folder: IMAGE_FOLDER, allowedFormats };
 }

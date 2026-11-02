@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import Link from "next/link";
 import { deleteCaseStudyAction, saveCaseStudyAction } from "@/app/(cms)/case-studies/actions";
 import { StatusBadge } from "@/components/insights/ArticleEditor";
+import { ImageAreaContext } from "@/components/insights/upload-image";
 import { FieldSections, SectionNav } from "@/components/pages/FieldSections";
 import { buttonClass } from "@/components/ui/button-styles";
 import { Field as TextField } from "@/components/ui/Field";
@@ -127,7 +129,9 @@ export function CaseStudyEditor({ caseStudy, emptyContent, fields, imagesEnabled
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="min-w-0 space-y-6">
-                    <FieldSections fields={fields} values={draft.content} onChange={setContent} errors={errors} imagesEnabled={imagesEnabled} />
+                    <ImageAreaContext value="case-studies">
+                        <FieldSections fields={fields} values={draft.content} onChange={setContent} errors={errors} imagesEnabled={imagesEnabled} />
+                    </ImageAreaContext>
                 </div>
 
                 <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
@@ -168,6 +172,11 @@ export function CaseStudyEditor({ caseStudy, emptyContent, fields, imagesEnabled
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                            {saved && (
+                                <Link href={`/case-studies/${saved.id}/preview`} target="_blank" className="font-semibold text-green hover:text-green-hover">
+                                    Preview{dirty ? " (last saved version)" : ""}
+                                </Link>
+                            )}
                             {isLive && websiteUrl && saved && (
                                 <a href={`${websiteUrl}/work/${saved.slug}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-green hover:text-green-hover">
                                     View on website

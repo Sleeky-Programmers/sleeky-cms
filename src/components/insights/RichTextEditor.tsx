@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { use, useRef, useState } from "react";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import { Placeholder } from "@tiptap/extensions";
 import { richTextExtensions, type RichTextDoc } from "@/lib/insights/rich-text";
 import { isSafeLink } from "@/lib/insights/sanitize";
-import { ACCEPT_ATTRIBUTE, uploadImage } from "./upload-image";
+import { ACCEPT_ATTRIBUTE, ImageAreaContext, uploadImage } from "./upload-image";
 
 type RichTextEditorProps = {
     initialContent: RichTextDoc;
@@ -48,6 +48,7 @@ function Toolbar({ editor, imagesEnabled }: { editor: Editor; imagesEnabled: boo
     const fileInput = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState("");
+    const area = use(ImageAreaContext);
 
     const state = useEditorState({
         editor,
@@ -88,7 +89,7 @@ function Toolbar({ editor, imagesEnabled }: { editor: Editor; imagesEnabled: boo
         setUploadError("");
         setUploading(true);
         try {
-            const image = await uploadImage(file);
+            const image = await uploadImage(file, area);
             const alt = window.prompt("Describe this image for people who can't see it:", "") ?? "";
             editor.chain().focus().setImage({ src: image.url, alt: alt.trim() }).run();
         } catch (error) {

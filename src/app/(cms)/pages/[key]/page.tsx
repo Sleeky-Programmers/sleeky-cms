@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageEditor } from "@/components/pages/PageEditor";
+import { listCaseStudies } from "@/lib/case-studies/store";
 import { cloudinaryConfig } from "@/lib/images";
+import { withCaseStudyOptions } from "@/lib/pages/fields";
 import { getPageDefinition } from "@/lib/pages/registry";
 import { getPage } from "@/lib/pages/store";
 import { requireUser } from "@/lib/session";
@@ -29,8 +31,12 @@ async function EditPage({ params }: Pick<PageProps<"/pages/[key]">, "params">) {
   await requireUser();
   const { key } = await params;
   const definition = getPageDefinition(key);
-  const page = definition ? await getPage(key) : null;
+  const [page, caseStudies] = await Promise.all([definition ? getPage(key) : null, listCaseStudies()]);
   if (!definition || !page) notFound();
+  const caseStudyOptions = caseStudies.map((study) => ({
+    value: study.slug,
+    label: study.status === "published" ? study.client : `${study.client} (draft)`,
+  }));
 
   const origin = websiteOrigin();
   const listing = page.values.listing as { name?: string } | undefined;
@@ -44,7 +50,7 @@ async function EditPage({ params }: Pick<PageProps<"/pages/[key]">, "params">) {
       <PageEditor
         key={key}
         pageKey={key}
-        fields={definition.fields}
+        fields={withCaseStudyOptions(definition.fields, caseStudyOptions)}
         initial={page}
         imagesEnabled={cloudinaryConfig() !== null}
         websiteHref={origin && definition.websitePath ? `${origin}${definition.websitePath}` : undefined}
