@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { cloudinaryConfig, IMAGE_FOLDER, IMAGE_FORMATS } from "@/lib/images";
 import { ArticleError, deleteArticle, saveArticle, type Article, type SaveIntent } from "@/lib/insights/articles";
-import { refreshWebsite } from "@/lib/insights/revalidate";
+import { refreshWebsite } from "@/lib/revalidate";
 import { requireUser } from "@/lib/session";
 import { findUser } from "@/lib/users";
 

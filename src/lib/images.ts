@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { env } from "./env";
 
 /** An image stored in Cloudinary, as saved on an article. */
@@ -18,6 +19,15 @@ export function cloudinaryConfig() {
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) return null;
   return { cloudName: CLOUDINARY_CLOUD_NAME, apiKey: CLOUDINARY_API_KEY, apiSecret: CLOUDINARY_API_SECRET };
 }
+
+/** Validates an image saved on an article or page: it must come from our Cloudinary account. */
+export const storedImageSchema = z.object({
+  publicId: z.string().min(1).max(300),
+  url: z.string().refine((url) => isOwnImageUrl(url), "Images must be uploaded through the CMS."),
+  width: z.number().int().positive().max(20_000),
+  height: z.number().int().positive().max(20_000),
+  alt: z.string().trim().max(300, "Use at most 300 characters."),
+});
 
 /** True for delivery URLs from this account's Cloudinary folder; anything else is rejected on save. */
 export function isOwnImageUrl(url: string): boolean {

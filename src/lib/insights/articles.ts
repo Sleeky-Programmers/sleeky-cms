@@ -1,8 +1,8 @@
 import { MongoServerError, ObjectId, type Collection } from "mongodb";
 import { z } from "zod";
 import { db } from "../db";
-import { isOwnImageUrl, type StoredImage } from "../images";
-import { ALT_MAX, CATEGORY_MAX, EXCERPT_MAX, EXCERPT_MIN, META_DESCRIPTION_MAX, TITLE_MAX } from "./limits";
+import { isOwnImageUrl, storedImageSchema, type StoredImage } from "../images";
+import { CATEGORY_MAX, EXCERPT_MAX, EXCERPT_MIN, META_DESCRIPTION_MAX, TITLE_MAX } from "./limits";
 import { renderArticleHtml } from "./render";
 import { docText, readingMinutes, type RichTextDoc } from "./rich-text";
 import { sanitizeDoc } from "./sanitize";
@@ -103,14 +103,6 @@ function toSummary(doc: ArticleDoc): ArticleSummary {
 }
 
 // ---------- Input validation ----------
-
-const storedImageSchema = z.object({
-  publicId: z.string().min(1).max(300),
-  url: z.string().refine(isOwnImageUrl, "Images must be uploaded through the CMS."),
-  width: z.number().int().positive().max(20_000),
-  height: z.number().int().positive().max(20_000),
-  alt: z.string().trim().max(ALT_MAX, `Use at most ${ALT_MAX} characters.`),
-});
 
 export const articleInputSchema = z.object({
   id: z.string().optional(),
