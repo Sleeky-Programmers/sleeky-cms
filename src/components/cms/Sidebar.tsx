@@ -36,6 +36,12 @@ const icons = {
             <path d="M14 3v5h5M9 13h7M9 17h5" />
         </svg>
     ),
+    work: (
+        <svg {...iconProps}>
+            <rect x="3" y="7" width="18" height="13" rx="2" />
+            <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18" />
+        </svg>
+    ),
     pages: (
         <svg {...iconProps}>
             <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -61,13 +67,14 @@ const icons = {
 type NavItem = { href: string; label: string; icon: keyof typeof icons; adminOnly?: boolean };
 type NavSection = { title?: string; items: NavItem[] };
 
-// Add new CMS features here (e.g. case studies under Content).
+// Add new CMS features here.
 const SECTIONS: NavSection[] = [
     { items: [{ href: "/", label: "Dashboard", icon: "dashboard" }] },
     {
         title: "Content",
         items: [
             { href: "/insights", label: "Insights", icon: "insights" },
+            { href: "/case-studies", label: "Case studies", icon: "work" },
             { href: "/pages", label: "Pages", icon: "pages" },
             { href: "/pages/site", label: "Site settings", icon: "settings" },
         ],

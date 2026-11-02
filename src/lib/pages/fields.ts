@@ -7,6 +7,8 @@ type Base = {
   hint?: string;
   /** Must not be left empty. */
   required?: boolean;
+  /** Can be empty in a draft but is checked before publishing (labelled instead of "optional"). */
+  neededToPublish?: boolean;
 };
 
 export type TextField = Base & {
@@ -48,7 +50,25 @@ export type ImageField = Base & { type: "image" };
 /** Formatted text (headings, lists, links), edited with the article editor. */
 export type RichTextField = Base & { type: "richText" };
 
-export type Field = TextField | TextAreaField | HeadingField | StringListField | ListField | GroupField | ImageField | RichTextField;
+export type Option = { value: string; label: string };
+
+/** One choice from a fixed set. The first option is the default. */
+export type SelectField = Base & { type: "select"; options: Option[] };
+
+/** Any number of choices from a fixed set (shown as checkboxes). */
+export type ChoicesField = Base & { type: "choices"; options: Option[]; max?: number };
+
+export type Field =
+  | TextField
+  | TextAreaField
+  | HeadingField
+  | StringListField
+  | ListField
+  | GroupField
+  | ImageField
+  | RichTextField
+  | SelectField
+  | ChoicesField;
 
 export type PageValues = Record<string, unknown>;
 
@@ -81,7 +101,10 @@ export function emptyValue(field: Field): unknown {
   switch (field.type) {
     case "stringList":
     case "list":
+    case "choices":
       return [];
+    case "select":
+      return field.options[0]?.value ?? "";
     case "group":
       return Object.fromEntries(field.fields.map((child) => [child.key, emptyValue(child)]));
     case "image":

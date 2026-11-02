@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button-styles";
+import { countCaseStudies } from "@/lib/case-studies/store";
 import { countArticles } from "@/lib/insights/articles";
+import { listPages } from "@/lib/pages/store";
 import { requireUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -15,10 +17,46 @@ export default function DashboardPage() {
   );
 }
 
+type ContentCardProps = {
+  id: string;
+  title: string;
+  description: string;
+  /** Where the Published and Drafts counts link to. */
+  links: { published: string; draft: string };
+  newHref: string;
+  newLabel: string;
+  counts: { published: number; draft: number };
+};
+
+function ContentCard({ id, title, description, links, newHref, newLabel, counts }: ContentCardProps) {
+  return (
+    <section aria-labelledby={id} className="rounded-[28px] border border-line bg-surface p-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 id={id} className="font-display text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="mt-1 text-muted">{description}</p>
+        </div>
+        <Link href={newHref} className={buttonClass("primary")}>{newLabel}</Link>
+      </div>
+      <dl className="mt-6 grid grid-cols-2 gap-4 sm:max-w-md">
+        <Link href={links.published} className="rounded-2xl border border-line bg-ink-raised p-5 transition-colors hover:border-green">
+          <dt className="text-sm text-muted">Published</dt>
+          <dd className="mt-1 font-display text-4xl font-extrabold text-green">{counts.published}</dd>
+        </Link>
+        <Link href={links.draft} className="rounded-2xl border border-line bg-ink-raised p-5 transition-colors hover:border-green">
+          <dt className="text-sm text-muted">Drafts</dt>
+          <dd className="mt-1 font-display text-4xl font-extrabold">{counts.draft}</dd>
+        </Link>
+      </dl>
+    </section>
+  );
+}
+
 async function Dashboard() {
   const user = await requireUser();
   const firstName = user.name.split(/\s+/)[0];
-  const counts = await countArticles();
+  const [articles, caseStudies, pages] = await Promise.all([countArticles(), countCaseStudies(), listPages()]);
+  const edited = pages.filter((page) => page.customised).length;
 
   return (
     <div className="space-y-8">
@@ -29,33 +67,37 @@ async function Dashboard() {
         </h1>
       </div>
 
-      <section aria-labelledby="insights-heading" className="rounded-[28px] border border-line bg-surface p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 id="insights-heading" className="font-display text-2xl font-bold tracking-tight">Insights</h2>
-            <p className="mt-1 text-muted">Articles for the website&rsquo;s Insights page.</p>
-          </div>
-          <Link href="/insights/new" className={buttonClass("primary")}>New article</Link>
-        </div>
-        <dl className="mt-6 grid grid-cols-2 gap-4 sm:max-w-md">
-          <Link href="/insights?status=published" className="rounded-2xl border border-line bg-ink-raised p-5 transition-colors hover:border-green">
-            <dt className="text-sm text-muted">Published</dt>
-            <dd className="mt-1 font-display text-4xl font-extrabold text-green">{counts.published}</dd>
-          </Link>
-          <Link href="/insights?status=draft" className="rounded-2xl border border-line bg-ink-raised p-5 transition-colors hover:border-green">
-            <dt className="text-sm text-muted">Drafts</dt>
-            <dd className="mt-1 font-display text-4xl font-extrabold">{counts.draft}</dd>
-          </Link>
-        </dl>
-      </section>
+      <div className="grid gap-8 xl:grid-cols-2">
+        <ContentCard
+          id="insights-heading"
+          title="Insights"
+          description="Articles for the website’s Insights page."
+          links={{ published: "/insights?status=published", draft: "/insights?status=draft" }}
+          newHref="/insights/new"
+          newLabel="New article"
+          counts={articles}
+        />
+        <ContentCard
+          id="case-studies-heading"
+          title="Case studies"
+          description="Projects on the website’s Work pages."
+          links={{ published: "/case-studies", draft: "/case-studies" }}
+          newHref="/case-studies/new"
+          newLabel="New case study"
+          counts={caseStudies}
+        />
+      </div>
 
-      <section className="rounded-[28px] border border-line bg-surface p-8">
-        <h2 className="font-display text-2xl font-bold tracking-tight">More content tools are on the way</h2>
+      <section aria-labelledby="pages-heading" className="rounded-[28px] border border-line bg-surface p-8">
+        <h2 id="pages-heading" className="font-display text-2xl font-bold tracking-tight">Website pages</h2>
         <p className="mt-2 max-w-xl text-muted">
-          Case studies and page content will be managed here too.
-          {user.role === "admin" && " You can invite the rest of the team in the meantime."}
+          The text of the homepage, About, service pages and more. {edited === 0 ? "All pages show their original text." : `${edited} of ${pages.length} edited.`}
         </p>
-        {user.role === "admin" && <Link href="/users" className={`${buttonClass("outline")} mt-6`}>Manage users</Link>}
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href="/pages" className={buttonClass("outline")}>Edit pages</Link>
+          <Link href="/pages/site" className={buttonClass("outline")}>Site settings</Link>
+          {user.role === "admin" && <Link href="/users" className={buttonClass("outline")}>Manage users</Link>}
+        </div>
       </section>
     </div>
   );
