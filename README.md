@@ -28,12 +28,35 @@ It prints an invite link (and emails it when SMTP is configured). Open it, choos
 
 ## Accounts and access
 
-- **Roles:** *Admin* manages users and invites, plus everything editors can do. *Editor* works on content (coming in later features).
+- **Roles:** *Admin* manages users and invites, plus everything editors can do. *Editor* works on content.
 - **Invites:** admins invite people from **Users**. Each invite link works once and expires after 7 days. Re-inviting the same email cancels the earlier link. Admins can resend (which issues a fresh link) or cancel pending invites.
 - **Deactivating** a user signs them out everywhere and blocks sign-in; reactivating restores access. Accounts are never hard-deleted.
 - **Safeguards:** admins can't change their own role or deactivate themselves, and the last active admin can't be demoted or deactivated.
 - **Passwords:** at least 10 characters. "Forgot your password?" emails a reset link that expires after 1 hour and signs the account out of every other session.
 - Sign-in and password-reset attempts are rate limited in production.
+
+## Insights articles
+
+Everyone signed in can write, save drafts, preview, publish, update and unpublish articles from **Insights**.
+
+- **Drafts** only need a title. **Publishing** also needs a web address, a summary (20+ characters), a category, some body text and, if there's a cover image, a description of it.
+- The **web address** follows the title until you edit it or the article is first published. Changing the address of a live article breaks existing links, and the editor warns about it.
+- **Saving a published article** updates it on the website straight away (the button says *Update*). *Unpublish* takes it down and makes it a draft again; the first-published date is kept.
+- Only **drafts** can be deleted, so nothing disappears from the website by accident.
+- If someone else saved the article after you opened it, your save is refused instead of overwriting theirs.
+- **Images** upload straight from the browser to Cloudinary (JPG, PNG, WebP, GIF or AVIF, up to 10 MB). Without Cloudinary settings, uploads are turned off.
+- Article bodies are cleaned on every save: only the editor's formatting is kept, links must be web/email/phone links and images must come from our Cloudinary account.
+
+### Public API for the website
+
+Read-only and unauthenticated; only published articles, no internal fields.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/public/insights` | `{ articles: [...] }`: slug, title, excerpt, metaDescription, category, author, publishedAt, updatedAt, readingMinutes, coverImage |
+| `GET /api/public/insights/<slug>` | `{ article }`: the same plus `html` (the article body), or 404 |
+
+When an article is published, updated or unpublished, the CMS POSTs `{ "type": "insights", "slugs": [...] }` to `WEBSITE_REVALIDATE_URL` with `Authorization: Bearer <REVALIDATE_SECRET>`, so the website can refresh its cache right away.
 
 ## Environment variables
 
@@ -45,6 +68,8 @@ See [`.env.example`](.env.example). Summary:
 | `MONGODB_URI` | Yes | MongoDB connection string (uses the database named in it) |
 | `BETTER_AUTH_SECRET` | Yes | Signs sessions; at least 32 random characters, different per environment |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM` | In production | SMTP for invite and reset emails. In development, emails are printed to the terminal instead |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Article image uploads (Cloudinary console > Settings > API Keys) |
+| `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles change (see above) |
 | `MONGODB_DNS_SERVERS` | No | Only for machines whose DNS refuses `mongodb+srv` lookups (`querySrv ECONNREFUSED`), e.g. `1.1.1.1,8.8.8.8` |
 | `MONGODB_DB` | No | Overrides the database name (used by tests) |
 
@@ -66,11 +91,14 @@ See [`.env.example`](.env.example). Summary:
 src/
   app/
     (auth)/        Public screens: sign-in, forgot/reset password, accept invite
-    (cms)/         Signed-in area: dashboard, users (admins)
+    (cms)/         Signed-in area: dashboard, insights, users (admins)
     api/auth/      Better Auth endpoints
-  components/      UI, auth forms, users management
+    api/public/    Read-only published content for the website
+  components/      UI, auth forms, article editor, users management
   lib/
     auth/          Better Auth config, roles and permissions
+    insights/      Articles: storage, validation, body sanitizing and HTML rendering
+    images.ts      Cloudinary settings and image checks
     session.ts     Data Access Layer: the only place sessions are read and checked
     invitations.ts Invite lifecycle (create, renew, revoke, accept)
     users.ts       User listing and last-admin safeguard

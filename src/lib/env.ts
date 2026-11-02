@@ -18,6 +18,15 @@ const schema = z.object({
   EMAIL_USERNAME: z.string().optional(),
   EMAIL_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
+  // Cloudinary for article images. Without these, image uploads are disabled.
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  // Tells the website to refresh its cached articles after a publish
+  // (e.g. https://sleekyprogrammers.com/api/revalidate). Optional.
+  WEBSITE_REVALIDATE_URL: z.url().optional(),
+  // Shared with the website's REVALIDATE_SECRET.
+  REVALIDATE_SECRET: z.string().min(16).optional(),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -26,7 +35,9 @@ let cached: Env | undefined;
 
 export function env(): Env {
   if (!cached) {
-    const parsed = schema.safeParse(process.env);
+    // Blank lines copied from .env.example (KEY=) count as "not set".
+    const values = Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== ""));
+    const parsed = schema.safeParse(values);
     if (!parsed.success) {
       const problems = parsed.error.issues.map((issue) => `  ${issue.path.join(".")}: ${issue.message}`).join("\n");
       throw new Error(`Invalid environment configuration:\n${problems}\nSee .env.example.`);
