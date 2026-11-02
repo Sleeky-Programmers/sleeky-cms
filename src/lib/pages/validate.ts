@@ -58,6 +58,18 @@ function schemaFor(field: Field): z.ZodType {
     }
     case "group":
       return objectSchema(field.fields);
+    case "select": {
+      const allowed = field.options.map((option) => option.value);
+      return z.string().refine((value) => allowed.includes(value), "Choose one of the options.");
+    }
+    case "choices": {
+      const allowed = field.options.map((option) => option.value);
+      let schema = z
+        .array(z.string().refine((value) => allowed.includes(value), "Choose from the options."))
+        .transform((values) => allowed.filter((value) => values.includes(value)));
+      if (field.max) schema = schema.refine((values) => values.length <= field.max!, `Choose at most ${field.max}.`);
+      return field.required ? schema.refine((values) => values.length > 0, "Choose at least one.") : schema;
+    }
     case "image":
       return storedImageSchema.nullable();
     case "richText":

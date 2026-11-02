@@ -4,9 +4,9 @@ import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { resetPageAction, savePageAction, type PageSaveResult } from "@/app/(cms)/pages/actions";
 import { buttonClass } from "@/components/ui/button-styles";
 import { Notice } from "@/components/ui/Notice";
-import { isRecord, type Field, type PageValues } from "@/lib/pages/fields";
+import type { Field, PageValues } from "@/lib/pages/fields";
 import type { PageState } from "@/lib/pages/store";
-import { FieldInput } from "./FieldInput";
+import { FieldSections, SectionNav } from "./FieldSections";
 
 type PageEditorProps = {
     pageKey: string;
@@ -18,7 +18,6 @@ type PageEditorProps = {
 };
 
 const dateTime = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
-const sectionId = (key: string) => `section-${key}`;
 
 export function PageEditor({ pageKey, fields, initial, imagesEnabled, websiteHref }: PageEditorProps) {
     const [page, setPage] = useState(initial);
@@ -31,7 +30,6 @@ export function PageEditor({ pageKey, fields, initial, imagesEnabled, websiteHre
     const [pending, startTransition] = useTransition();
 
     const dirty = JSON.stringify(values) !== baseline;
-    const errorCount = Object.keys(errors).length;
 
     const apply = (result: PageSaveResult, replaceValues: boolean) => {
         if (!result.ok) {
@@ -86,45 +84,7 @@ export function PageEditor({ pageKey, fields, initial, imagesEnabled, websiteHre
     return (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div className="min-w-0 space-y-6" key={generation}>
-                {errorCount > 0 && (
-                    <Notice tone="error">
-                        {errorCount === 1 ? "1 field needs" : `${errorCount} fields need`} attention. They&rsquo;re highlighted below.
-                    </Notice>
-                )}
-                {fields.map((field) => (
-                    <section key={field.key} id={sectionId(field.key)} aria-labelledby={`${sectionId(field.key)}-title`} className="scroll-mt-24 rounded-[22px] border border-line bg-surface p-6">
-                        <h2 id={`${sectionId(field.key)}-title`} className="font-display text-xl font-bold tracking-tight">{field.label}</h2>
-                        {field.hint && <p className="mt-1 text-sm text-muted">{field.hint}</p>}
-                        <div className="mt-5 space-y-5">
-                            {field.type === "group" ? (
-                                field.fields.map((child) => {
-                                    const group = isRecord(values[field.key]) ? (values[field.key] as PageValues) : {};
-                                    return (
-                                        <FieldInput
-                                            key={child.key}
-                                            field={child}
-                                            value={group[child.key]}
-                                            path={`${field.key}.${child.key}`}
-                                            onChange={(next) => setField(field.key, { ...group, [child.key]: next })}
-                                            errors={errors}
-                                            imagesEnabled={imagesEnabled}
-                                        />
-                                    );
-                                })
-                            ) : (
-                                <FieldInput
-                                    field={{ ...field, hint: undefined } as Field}
-                                    labelHidden
-                                    value={values[field.key]}
-                                    path={field.key}
-                                    onChange={(next) => setField(field.key, next)}
-                                    errors={errors}
-                                    imagesEnabled={imagesEnabled}
-                                />
-                            )}
-                        </div>
-                    </section>
-                ))}
+                <FieldSections fields={fields} values={values} onChange={setField} errors={errors} imagesEnabled={imagesEnabled} />
             </div>
 
             <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
@@ -157,21 +117,7 @@ export function PageEditor({ pageKey, fields, initial, imagesEnabled, websiteHre
                     </div>
                 </section>
 
-                <nav aria-label="Page sections" className="hidden rounded-[22px] border border-line bg-surface p-5 lg:block">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">Sections</p>
-                    <ul className="mt-3 space-y-1 text-sm">
-                        {fields.map((field) => (
-                            <li key={field.key}>
-                                <a href={`#${sectionId(field.key)}`} className="block rounded-lg px-2 py-1.5 text-soft hover:bg-ink-raised hover:text-white">
-                                    {field.label}
-                                    {Object.keys(errors).some((path) => path === field.key || path.startsWith(`${field.key}.`)) && (
-                                        <span className="ml-2 text-danger" aria-label="has errors">●</span>
-                                    )}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                </nav>
+                <SectionNav fields={fields} errors={errors} />
             </aside>
         </div>
     );

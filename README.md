@@ -58,6 +58,23 @@ Read-only and unauthenticated; only published articles, no internal fields.
 
 When an article is published, updated or unpublished, the CMS POSTs `{ "type": "insights", "slugs": [...] }` to `WEBSITE_REVALIDATE_URL` with `Authorization: Bearer <REVALIDATE_SECRET>`, so the website can refresh its cache right away.
 
+## Case studies
+
+Everyone signed in can create, edit, publish, unpublish and reorder the projects on the website's Work pages from **Case studies**.
+
+- **Import from the website:** when the list is empty, one click copies the projects the website currently shows (Votely, straitPay, Tiqwa Travels) in the same order, already published, so nothing disappears when the website switches to the CMS.
+- **Sections** follow the case study template: overview (client, summary, service tags, sector, live link, card colour), screenshots, the challenge, what we built, features, results, client quote, related services and search results. Empty optional sections are hidden on the website.
+- **Drafts** only need a client name. **Publishing** also needs a valid web address, a summary (20+ characters), at least one service tag, and the "What we built" headline and text. A challenge or quote must be complete or left empty, and every screenshot needs a description.
+- **Order:** use ↑/↓ on the list. The order is the website's order, and it decides each page's "Next project" link. New case studies go to the end.
+- The web address follows the client name until you edit it or the case study is first published. Same safeguards as articles: only drafts can be deleted, and a save is refused if someone else saved after you opened it.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/public/case-studies` | `{ caseStudies: [...] }`: published, in website order |
+| `GET /api/public/case-studies/<slug>` | `{ caseStudy, next }`: `next` is `{ slug, client }` of the following project (wrapping around), or 404 |
+
+Each case study has the same shape as the website's `CaseStudy` type (`src/lib/content/types.ts`), plus `publishedAt` and `updatedAt`. Images are `{ src, alt, width, height }`, and empty optional fields are left out. After a change, the CMS POSTs `{ "type": "case-studies", "slugs": [...] }` to `WEBSITE_REVALIDATE_URL`.
+
 ## Page content
 
 Everyone signed in can edit the website's own text from **Pages**: the homepage, About, Privacy policy, the six service pages, and **Site settings** (contact details, address, social links and footer text shared by every page).
@@ -88,8 +105,8 @@ See [`.env.example`](.env.example). Summary:
 | `MONGODB_URI` | Yes | MongoDB connection string (uses the database named in it) |
 | `BETTER_AUTH_SECRET` | Yes | Signs sessions; at least 32 random characters, different per environment |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM` | In production | SMTP for invite and reset emails. In development, emails are printed to the terminal instead |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Article image uploads (Cloudinary console > Settings > API Keys) |
-| `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles or pages change (see above) |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Image uploads for articles, case studies and pages (Cloudinary console > Settings > API Keys) |
+| `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles, case studies or pages change (see above) |
 | `MONGODB_DNS_SERVERS` | No | Only for machines whose DNS refuses `mongodb+srv` lookups (`querySrv ECONNREFUSED`), e.g. `1.1.1.1,8.8.8.8` |
 | `MONGODB_DB` | No | Overrides the database name (used by tests) |
 
@@ -111,12 +128,13 @@ See [`.env.example`](.env.example). Summary:
 src/
   app/
     (auth)/        Public screens: sign-in, forgot/reset password, accept invite
-    (cms)/         Signed-in area: dashboard, insights, pages, users (admins)
+    (cms)/         Signed-in area: dashboard, insights, case studies, pages, users (admins)
     api/auth/      Better Auth endpoints
     api/public/    Read-only published content for the website
-  components/      UI, auth forms, article editor, page editor, users management
+  components/      UI, auth forms, article, case study and page editors, users management
   lib/
     auth/          Better Auth config, roles and permissions
+    case-studies/  Case studies: fields, the website's originals, storage and publishing checks
     insights/      Articles: storage, validation, body sanitizing and HTML rendering
     pages/         Page content: field schemas, the website's original text, validation, storage
     revalidate.ts  Website refresh ping

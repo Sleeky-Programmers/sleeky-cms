@@ -5,7 +5,7 @@ import { env } from "./env";
  * so changes show within seconds instead of at the next cache expiry.
  * Best effort: a failure is logged and never blocks saving.
  */
-export async function refreshWebsite(slugs: string[], type: "insights" | "pages" = "insights") {
+export async function refreshWebsite(slugs: string[], type: "insights" | "pages" | "case-studies" = "insights") {
   const { WEBSITE_REVALIDATE_URL, REVALIDATE_SECRET } = env();
   if (!WEBSITE_REVALIDATE_URL || !REVALIDATE_SECRET || slugs.length === 0) return;
   try {

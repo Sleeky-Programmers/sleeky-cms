@@ -4,7 +4,16 @@ import { ImageUploadField } from "@/components/insights/CoverImageField";
 import { RichTextEditor } from "@/components/insights/RichTextEditor";
 import type { StoredImage } from "@/lib/images";
 import type { RichTextDoc } from "@/lib/insights/rich-text";
-import { emptyItem, isRecord, type Field, type ListField, type PageValues, type StringListField } from "@/lib/pages/fields";
+import {
+    emptyItem,
+    isRecord,
+    type ChoicesField,
+    type Field,
+    type ListField,
+    type PageValues,
+    type SelectField,
+    type StringListField,
+} from "@/lib/pages/fields";
 
 type FieldInputProps = {
     field: Field;
@@ -34,6 +43,10 @@ export function FieldInput(props: FieldInputProps) {
             return <ListInput {...props} field={field} />;
         case "stringList":
             return <StringListInput {...props} field={field} />;
+        case "select":
+            return <SelectInput {...props} field={field} />;
+        case "choices":
+            return <ChoicesInput {...props} field={field} />;
         case "image":
             return (
                 <ImageUploadField
@@ -63,6 +76,11 @@ export function FieldInput(props: FieldInputProps) {
         default:
             return <TextInput {...props} field={field} />;
     }
+}
+
+function RequirementNote({ field }: { field: Field }) {
+    if (field.required) return null;
+    return <span className="font-normal text-muted">{field.neededToPublish ? "(needed to publish)" : "(optional)"}</span>;
 }
 
 function ErrorText({ id, message }: { id: string; message?: string }) {
@@ -98,7 +116,7 @@ function TextInput({ field, value, path, onChange, errors, labelHidden }: FieldI
     return (
         <div>
             <label htmlFor={id} className={labelHidden ? "sr-only" : "block text-[15px] font-medium"}>
-                {field.label} {!field.required && <span className="font-normal text-muted">(optional)</span>}
+                {field.label} <RequirementNote field={field} />
             </label>
             {multiline ? (
                 <textarea
@@ -133,6 +151,60 @@ function TextInput({ field, value, path, onChange, errors, labelHidden }: FieldI
             </p>
             <ErrorText id={`${id}-error`} message={error} />
         </div>
+    );
+}
+
+function SelectInput({ field, value, path, onChange, errors, labelHidden }: FieldInputProps & { field: SelectField }) {
+    const id = idFor(path);
+    const error = errors[path];
+    return (
+        <div>
+            <label htmlFor={id} className={labelHidden ? "sr-only" : "block text-[15px] font-medium"}>{field.label}</label>
+            <select
+                id={id}
+                value={typeof value === "string" ? value : ""}
+                onChange={(event) => onChange(event.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={[error && `${id}-error`, field.hint && `${id}-hint`].filter(Boolean).join(" ") || undefined}
+                className={inputClass}
+            >
+                {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            {field.hint && <p id={`${id}-hint`} className="mt-1.5 text-sm text-muted">{field.hint}</p>}
+            <ErrorText id={`${id}-error`} message={error} />
+        </div>
+    );
+}
+
+function ChoicesInput({ field, value, path, onChange, errors, labelHidden }: FieldInputProps & { field: ChoicesField }) {
+    const id = idFor(path);
+    const selected = Array.isArray(value) ? (value as string[]) : [];
+    const error = errors[path];
+    const toggle = (option: string, checked: boolean) =>
+        onChange(field.options.map((item) => item.value).filter((item) => (item === option ? checked : selected.includes(item))));
+
+    return (
+        <fieldset aria-describedby={[error && `${id}-error`, field.hint && `${id}-hint`].filter(Boolean).join(" ") || undefined}>
+            <legend className={labelHidden ? "sr-only" : "text-[15px] font-medium"}>
+                {field.label} <RequirementNote field={field} />
+            </legend>
+            {field.hint && <p id={`${id}-hint`} className="mt-1 text-sm text-muted">{field.hint}</p>}
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {field.options.map((option) => (
+                    <label key={option.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate bg-surface px-3 py-2.5 text-[15px] has-[:checked]:border-green">
+                        <input
+                            type="checkbox"
+                            id={`${id}-${option.value}`}
+                            checked={selected.includes(option.value)}
+                            onChange={(event) => toggle(option.value, event.target.checked)}
+                            className="size-4 accent-green"
+                        />
+                        {option.label}
+                    </label>
+                ))}
+            </div>
+            <ErrorText id={`${id}-error`} message={error} />
+        </fieldset>
     );
 }
 
