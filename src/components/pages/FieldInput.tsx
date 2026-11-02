@@ -7,6 +7,7 @@ import type { RichTextDoc } from "@/lib/insights/rich-text";
 import {
     emptyItem,
     isRecord,
+    type CaseStudyField,
     type ChoicesField,
     type Field,
     type ListField,
@@ -47,6 +48,8 @@ export function FieldInput(props: FieldInputProps) {
             return <SelectInput {...props} field={field} />;
         case "choices":
             return <ChoicesInput {...props} field={field} />;
+        case "caseStudy":
+            return <CaseStudyInput {...props} field={field} />;
         case "image":
             return (
                 <ImageUploadField
@@ -171,6 +174,42 @@ function SelectInput({ field, value, path, onChange, errors, labelHidden }: Fiel
                 {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             {field.hint && <p id={`${id}-hint`} className="mt-1.5 text-sm text-muted">{field.hint}</p>}
+            <ErrorText id={`${id}-error`} message={error} />
+        </div>
+    );
+}
+
+function CaseStudyInput({ field, value, path, onChange, errors, labelHidden }: FieldInputProps & { field: CaseStudyField }) {
+    const id = idFor(path);
+    const error = errors[path];
+    const current = typeof value === "string" ? value : "";
+    const options = field.options ?? [];
+    // An address that isn't in the CMS (e.g. before the website's case studies are imported) stays selectable.
+    const missing = current !== "" && !options.some((option) => option.value === current);
+    const describedBy = [error && `${id}-error`, `${id}-hint`].filter(Boolean).join(" ");
+
+    return (
+        <div>
+            <label htmlFor={id} className={labelHidden ? "sr-only" : "block text-[15px] font-medium"}>{field.label}</label>
+            <select
+                id={id}
+                value={current}
+                onChange={(event) => onChange(event.target.value)}
+                aria-invalid={error || missing ? true : undefined}
+                aria-describedby={describedBy}
+                className={inputClass}
+            >
+                <option value="">None (hide this section)</option>
+                {missing && <option value={current}>{current} (not in the CMS)</option>}
+                {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <p id={`${id}-hint`} className={`mt-1.5 text-sm ${missing ? "text-[#FFC27A]" : "text-muted"}`}>
+                {missing
+                    ? `There's no case study at /work/${current} in the CMS, so the website won't show this section. Choose another, or create or import it under Case studies.`
+                    : options.length === 0
+                      ? "No case studies yet. Add them under Case studies."
+                      : "Drafts only appear on the website once they're published."}
+            </p>
             <ErrorText id={`${id}-error`} message={error} />
         </div>
     );

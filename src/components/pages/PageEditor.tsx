@@ -6,6 +6,7 @@ import { buttonClass } from "@/components/ui/button-styles";
 import { Notice } from "@/components/ui/Notice";
 import type { Field, PageValues } from "@/lib/pages/fields";
 import type { PageState } from "@/lib/pages/store";
+import { ImageAreaContext } from "@/components/insights/upload-image";
 import { FieldSections, SectionNav } from "./FieldSections";
 
 type PageEditorProps = {
@@ -84,7 +85,9 @@ export function PageEditor({ pageKey, fields, initial, imagesEnabled, websiteHre
     return (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div className="min-w-0 space-y-6" key={generation}>
-                <FieldSections fields={fields} values={values} onChange={setField} errors={errors} imagesEnabled={imagesEnabled} />
+                <ImageAreaContext value="pages">
+                    <FieldSections fields={fields} values={values} onChange={setField} errors={errors} imagesEnabled={imagesEnabled} />
+                </ImageAreaContext>
             </div>
 
             <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">

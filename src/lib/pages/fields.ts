@@ -58,7 +58,14 @@ export type SelectField = Base & { type: "select"; options: Option[] };
 /** Any number of choices from a fixed set (shown as checkboxes). */
 export type ChoicesField = Base & { type: "choices"; options: Option[]; max?: number };
 
+/**
+ * A case study, by its web address ("" for none). The choices come from the
+ * CMS's case studies and are filled in when the editor opens (see withCaseStudyOptions).
+ */
+export type CaseStudyField = Base & { type: "caseStudy"; options?: Option[] };
+
 export type Field =
+  | CaseStudyField
   | TextField
   | TextAreaField
   | HeadingField
@@ -114,6 +121,15 @@ export function emptyValue(field: Field): unknown {
     default:
       return "";
   }
+}
+
+/** Copies the field definitions with the current case studies as the choices for case study fields. */
+export function withCaseStudyOptions(fields: Field[], options: Option[]): Field[] {
+  return fields.map((field) => {
+    if (field.type === "caseStudy") return { ...field, options };
+    if (field.type === "group" || field.type === "list") return { ...field, fields: withCaseStudyOptions(field.fields, options) };
+    return field;
+  });
 }
 
 /** A blank entry for a list, used when an editor adds one. */

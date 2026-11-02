@@ -1,6 +1,8 @@
 "use client";
 
-import { getUploadTicket } from "@/app/(cms)/insights/actions";
+import { createContext } from "react";
+import { getUploadTicket } from "@/app/(cms)/upload-actions";
+import type { ImageArea } from "@/lib/images";
 
 export type UploadedImage = { publicId: string; url: string; width: number; height: number };
 
@@ -9,12 +11,15 @@ const MAX_BYTES = 10 * 1024 * 1024;
 
 export const ACCEPT_ATTRIBUTE = ACCEPTED.join(",");
 
+/** Which Cloudinary folder uploads go to. Each editor sets it; Insights is the default. */
+export const ImageAreaContext = createContext<ImageArea>("insights");
+
 /** Uploads straight from the browser to Cloudinary using a short-lived signature from the CMS. */
-export async function uploadImage(file: File): Promise<UploadedImage> {
+export async function uploadImage(file: File, area: ImageArea): Promise<UploadedImage> {
   if (!ACCEPTED.includes(file.type)) throw new Error("Use a JPG, PNG, WebP, GIF or AVIF image.");
   if (file.size > MAX_BYTES) throw new Error("That image is over 10 MB. Use a smaller version.");
 
-  const ticket = await getUploadTicket();
+  const ticket = await getUploadTicket(area);
   if (!ticket.ok) throw new Error(ticket.message);
 
   const body = new FormData();

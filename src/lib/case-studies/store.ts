@@ -395,6 +395,13 @@ function toPublic(doc: CaseStudyDoc): PublicCaseStudy {
   });
 }
 
+/** A case study as the website would show it (any status), for the CMS preview. */
+export async function previewCaseStudy(id: string): Promise<(PublicCaseStudy & { status: CaseStudyStatus }) | null> {
+  if (!ObjectId.isValid(id)) return null;
+  const doc = await (await caseStudies()).findOne({ _id: new ObjectId(id) });
+  return doc ? { ...toPublic(doc), status: doc.status } : null;
+}
+
 /** Published case studies in website order. */
 export async function listPublishedCaseStudies(): Promise<PublicCaseStudy[]> {
   const docs = await (await caseStudies()).find({ status: "published" }).sort({ position: 1 }).toArray();

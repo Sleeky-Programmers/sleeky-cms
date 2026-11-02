@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isOwnImageUrl, storedImageSchema } from "../images";
 import { docText } from "../insights/rich-text";
 import { sanitizeDoc } from "../insights/sanitize";
+import { SLUG_MAX, SLUG_PATTERN } from "../insights/slug";
 import type { Field, PageValues } from "./fields";
 
 const MAX_HEADING_LINES = 4;
@@ -58,6 +59,13 @@ function schemaFor(field: Field): z.ZodType {
     }
     case "group":
       return objectSchema(field.fields);
+    case "caseStudy":
+      // Only the format is checked: a page may point at a case study before it's created or published.
+      return z
+        .string()
+        .trim()
+        .max(SLUG_MAX, tooLong(SLUG_MAX))
+        .refine((value) => value === "" || SLUG_PATTERN.test(value), "Choose a case study from the list.");
     case "select": {
       const allowed = field.options.map((option) => option.value);
       return z.string().refine((value) => allowed.includes(value), "Choose one of the options.");

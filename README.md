@@ -66,6 +66,7 @@ Everyone signed in can create, edit, publish, unpublish and reorder the projects
 - **Sections** follow the case study template: overview (client, summary, service tags, sector, live link, card colour), screenshots, the challenge, what we built, features, results, client quote, related services and search results. Empty optional sections are hidden on the website.
 - **Drafts** only need a client name. **Publishing** also needs a valid web address, a summary (20+ characters), at least one service tag, and the "What we built" headline and text. A challenge or quote must be complete or left empty, and every screenshot needs a description.
 - **Order:** use ↑/↓ on the list. The order is the website's order, and it decides each page's "Next project" link. New case studies go to the end.
+- **Preview** shows the last saved version laid out like the website's case study page, including drafts and placeholders for missing screenshots.
 - The web address follows the client name until you edit it or the case study is first published. Same safeguards as articles: only drafts can be deleted, and a save is refused if someone else saved after you opened it.
 
 | Endpoint | Returns |
@@ -83,6 +84,7 @@ Everyone signed in can edit the website's own text from **Pages**: the homepage,
 - **Saving goes live straight away.** There are no drafts for page text. *Reset to original text* discards all edits to that page.
 - Each field has limits that match the design (character counts, number of list items), so edits can't break the layout. Some lists need an exact number of entries, e.g. the four homepage process steps.
 - In **headings**, each new line is a new line on the website, and `*words between asterisks*` are shown in the green accent colour.
+- A service page's **Related work** is chosen from the case studies in the CMS, or "None" to hide it. A draft only shows on the website once it's published.
 - Phone and WhatsApp numbers use the international format (`+2349160952000` for phone, `2349160952000` for WhatsApp). Links must start with `http://` or `https://`.
 - Same safeguards as articles: if someone else saved the page after you opened it, your save is refused; rich text (the privacy policy) is cleaned on save.
 
@@ -105,7 +107,7 @@ See [`.env.example`](.env.example). Summary:
 | `MONGODB_URI` | Yes | MongoDB connection string (uses the database named in it) |
 | `BETTER_AUTH_SECRET` | Yes | Signs sessions; at least 32 random characters, different per environment |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM` | In production | SMTP for invite and reset emails. In development, emails are printed to the terminal instead |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Image uploads for articles, case studies and pages (Cloudinary console > Settings > API Keys) |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Image uploads (Cloudinary console > Settings > API Keys). Files go to `sleeky-cms/insights`, `sleeky-cms/case-studies` or `sleeky-cms/pages` |
 | `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles, case studies or pages change (see above) |
 | `MONGODB_DNS_SERVERS` | No | Only for machines whose DNS refuses `mongodb+srv` lookups (`querySrv ECONNREFUSED`), e.g. `1.1.1.1,8.8.8.8` |
 | `MONGODB_DB` | No | Overrides the database name (used by tests) |

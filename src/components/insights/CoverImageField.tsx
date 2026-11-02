@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { use, useRef, useState } from "react";
 import type { StoredImage } from "@/lib/images";
 import { ALT_MAX } from "@/lib/insights/limits";
-import { ACCEPT_ATTRIBUTE, uploadImage } from "./upload-image";
+import { ACCEPT_ATTRIBUTE, ImageAreaContext, uploadImage } from "./upload-image";
 
 type ImageUploadFieldProps = {
     /** Unique within the page, used for element ids. */
@@ -25,12 +25,13 @@ export function ImageUploadField({ id, label, value, onChange, enabled, altError
     const input = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState("");
+    const area = use(ImageAreaContext);
 
     const choose = async (file: File) => {
         setUploadError("");
         setUploading(true);
         try {
-            const image = await uploadImage(file);
+            const image = await uploadImage(file, area);
             onChange({ ...image, alt: value?.alt ?? "" });
         } catch (failure) {
             setUploadError(failure instanceof Error ? failure.message : "Upload failed.");
