@@ -25,7 +25,44 @@ export function Field({ label, name, error, hint, id = name, className = "", ...
     );
 }
 
-type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+type TextAreaFieldProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+    label: string;
+    name: string;
+    error?: string;
+    hint?: string;
+    /** Shows "used / max" under the field; turns red past the limit. */
+    counter?: { used: number; max: number };
+};
+
+export function TextAreaField({ label, name, error, hint, counter, id = name, className = "", ...textarea }: TextAreaFieldProps) {
+    const describedBy = [error && `${id}-error`, (hint || counter) && `${id}-hint`].filter(Boolean).join(" ") || undefined;
+    return (
+        <div className={className}>
+            <label htmlFor={id} className="block text-[15px] font-medium">{label}</label>
+            <textarea
+                id={id}
+                name={name}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={describedBy}
+                className="mt-2 w-full resize-y rounded-[14px] border border-slate bg-surface px-4 py-3 text-base leading-relaxed text-white transition-colors placeholder:text-faint focus:border-green focus:outline-none aria-[invalid=true]:border-danger"
+                {...textarea}
+            />
+            {(hint || counter) && (
+                <p id={`${id}-hint`} className="mt-1.5 flex justify-between gap-3 text-sm text-muted">
+                    <span>{hint}</span>
+                    {counter && (
+                        <span className={counter.used > counter.max ? "font-semibold text-danger" : ""}>
+                            {counter.used}/{counter.max}
+                        </span>
+                    )}
+                </p>
+            )}
+            {error && <p id={`${id}-error`} className="mt-1.5 text-sm font-medium text-danger">{error}</p>}
+        </div>
+    );
+}
+
+type SelectFieldProps =React.SelectHTMLAttributes<HTMLSelectElement> & {
     label: string;
     name: string;
     error?: string;

@@ -2,7 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 // Paths anyone can open. Everything else needs a session.
-const PUBLIC_PATHS = [/^\/sign-in$/, /^\/forgot-password$/, /^\/reset-password$/, /^\/invite\/[^/]+$/, /^\/api\/auth\//];
+const PUBLIC_PATHS = [
+  /^\/sign-in$/,
+  /^\/forgot-password$/,
+  /^\/reset-password$/,
+  /^\/invite\/[^/]+$/,
+  /^\/api\/auth\//,
+  // Read-only published content for the website.
+  /^\/api\/public\//,
+];
 
 /**
  * Optimistic check only: sends visitors without a session cookie to sign-in
