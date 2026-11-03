@@ -28,11 +28,32 @@ function routeMongoDnsThrough(servers: string[]) {
   globalForMongo.__sleekyMongoDnsPatched = true;
 }
 
+/**
+ * Lets the client recover after its connection attempt fails.
+ *
+ * When connecting fails (network down, Wi-Fi waking up, Atlas unreachable), the
+ * driver closes its internal topology but leaves it attached to the client. It
+ * only connects again when there is no topology, so every later operation fails
+ * with "Topology is closed" until the server restarts. Detaching the closed
+ * topology makes the next operation connect afresh. The same client object is
+ * kept, because Better Auth holds on to it.
+ */
+export function reconnectAfterFailures(client: MongoClient): MongoClient {
+  type Internals = { topology?: { s?: { state?: string } } };
+  client.on("topologyClosed", () => {
+    const internals = client as unknown as Internals;
+    // Only a topology that is fully closed (never one that is still connecting).
+    // An explicit client.close() detaches it too, and then refuses to reconnect.
+    if (internals.topology?.s?.state === "closed") internals.topology = undefined;
+  });
+  return client;
+}
+
 export function mongoClient(): MongoClient {
   if (!globalForMongo.__sleekyMongoClient) {
     const { MONGODB_URI, MONGODB_DNS_SERVERS } = env();
     if (MONGODB_DNS_SERVERS) routeMongoDnsThrough(MONGODB_DNS_SERVERS.split(",").map((server) => server.trim()));
-    globalForMongo.__sleekyMongoClient = new MongoClient(MONGODB_URI, { appName: "sleeky-cms" });
+    globalForMongo.__sleekyMongoClient = reconnectAfterFailures(new MongoClient(MONGODB_URI, { appName: "sleeky-cms" }));
   }
   return globalForMongo.__sleekyMongoClient;
 }
