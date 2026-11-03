@@ -11,6 +11,8 @@ import type { Article, SaveIntent } from "@/lib/insights/articles";
 import { CATEGORY_MAX, EXCERPT_MAX, META_DESCRIPTION_MAX, TITLE_MAX } from "@/lib/insights/limits";
 import { emptyDoc, wordCount, type RichTextDoc } from "@/lib/insights/rich-text";
 import { SLUG_MAX, slugify } from "@/lib/insights/slug";
+import { unstable_rethrow } from "next/navigation";
+import { actionFailureMessage } from "@/lib/outdated-page";
 import { CoverImageField } from "./CoverImageField";
 import { RichTextEditor } from "./RichTextEditor";
 
@@ -86,7 +88,12 @@ export function ArticleEditor({ article, authors, categories, currentUser, image
             setPendingIntent(intent);
             setNotice(null);
             startTransition(async () => {
-                const result = await saveArticleAction({ ...fields, id: saved?.id, version: saved?.version }, intent);
+                let result: Awaited<ReturnType<typeof saveArticleAction>>;
+                try {
+                    result = await saveArticleAction({ ...fields, id: saved?.id, version: saved?.version }, intent);
+                } catch (error) {
+                    result = { ok: false, message: actionFailureMessage(error) };
+                }
                 setPendingIntent(null);
                 if (!result.ok) {
                     setErrors(result.fieldErrors ?? {});
@@ -139,9 +146,16 @@ export function ArticleEditor({ article, authors, categories, currentUser, image
         if (!saved || !window.confirm(`Delete "${saved.title}"? This can't be undone.`)) return;
         setPendingIntent("delete");
         startTransition(async () => {
-            const result = await deleteArticleAction(saved.id);
+            let message: string;
+            try {
+                message = (await deleteArticleAction(saved.id)).message;
+            } catch (error) {
+                // A successful delete redirects; Next's own signals pass through, anything else is reported.
+                unstable_rethrow(error);
+                message = actionFailureMessage(error);
+            }
             setPendingIntent(null);
-            setNotice({ tone: "error", text: result.message });
+            setNotice({ tone: "error", text: message });
         });
     };
 

@@ -2,7 +2,9 @@
 
 import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import Link from "next/link";
-import { deleteCaseStudyAction, saveCaseStudyAction } from "@/app/(cms)/case-studies/actions";
+import { unstable_rethrow } from "next/navigation";
+import { deleteCaseStudyAction, saveCaseStudyAction, type CaseStudySaveResult } from "@/app/(cms)/case-studies/actions";
+import { actionFailureMessage } from "@/lib/outdated-page";
 import { StatusBadge } from "@/components/insights/ArticleEditor";
 import { ImageAreaContext } from "@/components/insights/upload-image";
 import { FieldSections, SectionNav } from "@/components/pages/FieldSections";
@@ -66,7 +68,12 @@ export function CaseStudyEditor({ caseStudy, emptyContent, fields, imagesEnabled
         setPendingIntent(intent);
         setNotice(null);
         startTransition(async () => {
-            const result = await saveCaseStudyAction({ ...draft, id: saved?.id, version: saved?.version }, intent);
+            let result: CaseStudySaveResult;
+            try {
+                result = await saveCaseStudyAction({ ...draft, id: saved?.id, version: saved?.version }, intent);
+            } catch (error) {
+                result = { ok: false, message: actionFailureMessage(error) };
+            }
             setPendingIntent(null);
             if (!result.ok) {
                 setErrors(result.fieldErrors ?? {});
@@ -112,9 +119,16 @@ export function CaseStudyEditor({ caseStudy, emptyContent, fields, imagesEnabled
         if (!saved || !window.confirm(`Delete the ${client || "untitled"} case study? This can't be undone.`)) return;
         setPendingIntent("delete");
         startTransition(async () => {
-            const result = await deleteCaseStudyAction(saved.id);
+            let message: string;
+            try {
+                message = (await deleteCaseStudyAction(saved.id)).message;
+            } catch (error) {
+                // A successful delete redirects; Next's own signals pass through, anything else is reported.
+                unstable_rethrow(error);
+                message = actionFailureMessage(error);
+            }
             setPendingIntent(null);
-            setNotice({ tone: "error", text: result.message });
+            setNotice({ tone: "error", text: message });
         });
     };
 

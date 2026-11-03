@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { resetPageAction, savePageAction, type PageSaveResult } from "@/app/(cms)/pages/actions";
 import { buttonClass } from "@/components/ui/button-styles";
+import { actionFailureMessage } from "@/lib/outdated-page";
 import { Notice } from "@/components/ui/Notice";
 import type { Field, PageValues } from "@/lib/pages/fields";
 import type { PageState } from "@/lib/pages/store";
@@ -17,6 +18,15 @@ type PageEditorProps = {
     /** Full website address of this page, for "View on website". */
     websiteHref?: string;
 };
+
+/** Turns an action that throws (e.g. the page is out of date after a deploy) into a failed result. */
+async function safely(call: () => Promise<PageSaveResult>): Promise<PageSaveResult> {
+    try {
+        return await call();
+    } catch (error) {
+        return { ok: false, message: actionFailureMessage(error) };
+    }
+}
 
 const dateTime = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
@@ -51,14 +61,14 @@ export function PageEditor({ pageKey, fields, initial, imagesEnabled, websiteHre
     const save = () => {
         if (pending || !dirty) return;
         setNotice(null);
-        startTransition(async () => apply(await savePageAction(pageKey, values, page.version), false));
+        startTransition(async () => apply(await safely(() => savePageAction(pageKey, values, page.version)), false));
     };
 
     const reset = () => {
         if (pending) return;
         if (!window.confirm("Put this page back to the website's original text? Your edits to this page will be lost.")) return;
         setNotice(null);
-        startTransition(async () => apply(await resetPageAction(pageKey, page.version), true));
+        startTransition(async () => apply(await safely(() => resetPageAction(pageKey, page.version)), true));
     };
 
     const saveShortcut = useEffectEvent(save);
