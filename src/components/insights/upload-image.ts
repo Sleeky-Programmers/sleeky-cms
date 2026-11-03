@@ -3,6 +3,7 @@
 import { createContext } from "react";
 import { getUploadTicket } from "@/app/(cms)/upload-actions";
 import type { ImageArea } from "@/lib/images";
+import { isOutdatedPage } from "@/lib/outdated-page";
 
 export type UploadedImage = { publicId: string; url: string; width: number; height: number };
 
@@ -19,7 +20,12 @@ export async function uploadImage(file: File, area: ImageArea): Promise<Uploaded
   if (!ACCEPTED.includes(file.type)) throw new Error("Use a JPG, PNG, WebP, GIF or AVIF image.");
   if (file.size > MAX_BYTES) throw new Error("That image is over 10 MB. Use a smaller version.");
 
-  const ticket = await getUploadTicket(area);
+  let ticket: Awaited<ReturnType<typeof getUploadTicket>>;
+  try {
+    ticket = await getUploadTicket(area);
+  } catch (error) {
+    throw new Error(isOutdatedPage(error) ? "The CMS was updated while this page was open. Save your work, then reload the page to upload images." : "Couldn't start the upload. Try again.");
+  }
   if (!ticket.ok) throw new Error(ticket.message);
 
   const body = new FormData();
