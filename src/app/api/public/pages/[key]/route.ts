@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { PUBLIC_API_HEADERS } from "@/lib/public-api";
 import { getPublicPage } from "@/lib/pages/store";
 
 // Public, read-only: one page's text (original or edited), with rich text as HTML.
@@ -9,6 +10,6 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/publ
   if (!page) return Response.json({ error: "Not found" }, { status: 404 });
   return Response.json(
     { page },
-    { headers: { "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=300" } },
+    { headers: PUBLIC_API_HEADERS },
   );
 }
