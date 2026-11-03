@@ -23,7 +23,7 @@ const sections: [string, string[]][] = [
     "What we collect",
     [
       "Project briefs: when you start a project, we collect your name, company, email address, WhatsApp number, preferred contact channel, project details, timeline and any document you choose to attach.",
-      "Analytics: if you accept analytics cookies, we use Google Analytics and HubSpot to understand how visitors find and use the site, including pages viewed and how you arrived.",
+      "Analytics: if you accept analytics cookies, we use Google Analytics to understand how visitors find and use the site, including pages viewed and how you arrived.",
       "Messages: if you contact us by WhatsApp, phone or email, we receive the details you share in that conversation.",
     ],
   ],
@@ -44,7 +44,7 @@ const sections: [string, string[]][] = [
   [
     "Who we share it with",
     [
-      "We use trusted service providers to run this website and handle enquiries, including our hosting provider, email provider, Google (Analytics and reCAPTCHA) and HubSpot (customer relationship management). They process data on our behalf and only as needed to provide their services.",
+      "We use trusted service providers to run this website and handle enquiries, including our hosting provider, Google (Analytics and reCAPTCHA) and Zoho (customer relationship management and email). They process data on our behalf and only as needed to provide their services.",
     ],
   ],
   [
