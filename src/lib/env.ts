@@ -27,6 +27,9 @@ const schema = z.object({
   WEBSITE_REVALIDATE_URL: z.url().optional(),
   // Shared with the website's REVALIDATE_SECRET.
   REVALIDATE_SECRET: z.string().min(16).optional(),
+  // Vercel "Protection Bypass for Automation" secret of the website project, so the
+  // refresh ping can reach a preview deployment behind Vercel's login.
+  WEBSITE_PROTECTION_BYPASS: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof schema>;
