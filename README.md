@@ -97,6 +97,31 @@ Page keys: `home`, `about`, `privacy-policy`, `site`, and `service-<slug>` for e
 
 After a save or reset, the CMS POSTs `{ "type": "pages", "slugs": ["<key>"] }` to `WEBSITE_REVALIDATE_URL`, the same way as for articles.
 
+## Analytics
+
+**Analytics** shows the website's Google Analytics 4 data without opening Google Analytics: visitors right now, the period's totals compared with the period before, visitors and briefs per day, the Start a project form funnel, WhatsApp/phone/email clicks by location, every button and link clicked, top pages, scroll depth, channels, sources, devices, countries and all events. Pick 7, 28 or 90 days. Numbers refresh every few minutes (live visitors every 30 seconds), and only visitors who accept cookies are counted.
+
+**Connect it (once):**
+
+1. **Property ID:** Google Analytics → Admin → *Property details* → the numeric **Property ID** (e.g. `123456789`, not the `G-…` measurement ID) → `GA4_PROPERTY_ID`.
+2. **Service account:** in [Google Cloud console](https://console.cloud.google.com) create (or pick) a project → *APIs & Services* → *Library* → enable **Google Analytics Data API** → *IAM & Admin* → *Service accounts* → *Create service account* (no roles needed) → open it → *Keys* → *Add key* → *JSON*. Put the whole downloaded file's contents in `GOOGLE_SERVICE_ACCOUNT_JSON` (as is, or base64-encoded).
+3. **Access:** Google Analytics → Admin → *Property access management* → **+** → add the service account's email (`…@….iam.gserviceaccount.com`) as a **Viewer**.
+4. **Custom dimensions**, for the click, form and scroll reports: Google Analytics → Admin → *Custom definitions* → *Create custom dimension*, scope **Event**, one for each event parameter:
+
+   | Dimension name | Event parameter |
+   |---|---|
+   | Click location | `location` |
+   | Button label | `label` |
+   | Link type | `link_type` |
+   | Form step | `step_name` |
+   | Scroll depth | `percent` |
+
+   Google only collects them from the moment they're created, so do this early. Until then those reports say what's missing and the rest of the page works.
+
+**Only the live website is counted.** The same GA4 property also receives another app's data stream (Straitpay) and test traffic (localhost, Vercel previews), so every report is limited to `www.sleekyprogrammers.com` and `sleekyprogrammers.com`, and "Right now" to the website's data stream. Set `GA4_HOSTNAMES` (comma-separated) if the domain changes.
+
+The website sends these events (sleeky-website `src/lib/analytics.ts`): `button_click`, `scroll_depth`, `whatsapp_click`, `phone_click`, `email_click`, `form_step`, `file_upload` and `generate_lead` (a brief sent).
+
 ## Environment variables
 
 See [`.env.example`](.env.example). Summary:
@@ -109,6 +134,8 @@ See [`.env.example`](.env.example). Summary:
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM` | In production | SMTP for invite and reset emails. In development, emails are printed to the terminal instead |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Image uploads (Cloudinary console > Settings > API Keys). Files go to `sleeky-cms/insights`, `sleeky-cms/case-studies` or `sleeky-cms/pages` |
 | `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles, case studies or pages change (see above). Use a stable address (live domain or branch alias), not a one-off deployment URL |
+| `GA4_PROPERTY_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON` | For Analytics | The numeric GA4 property ID and a service account's JSON key with Viewer access (see Analytics) |
+| `GA4_HOSTNAMES` | No | Website domains the Analytics page counts; defaults to `www.sleekyprogrammers.com,sleekyprogrammers.com` |
 | `WEBSITE_PROTECTION_BYPASS` | For preview websites | The website project's Vercel *Protection Bypass for Automation* secret, so pings get past Vercel's login on previews. Failed pings are logged with the reason |
 | `MONGODB_DNS_SERVERS` | No | Only for machines whose DNS refuses `mongodb+srv` lookups (`querySrv ECONNREFUSED`), e.g. `1.1.1.1,8.8.8.8` |
 | `MONGODB_DB` | No | Overrides the database name (used by tests) |
@@ -138,6 +165,7 @@ src/
   lib/
     auth/          Better Auth config, roles and permissions
     case-studies/  Case studies: fields, the website's originals, storage and publishing checks
+    analytics/     Google Analytics 4 Data API: service-account sign-in and the Analytics page's reports
     insights/      Articles: storage, validation, body sanitizing and HTML rendering
     pages/         Page content: field schemas, the website's original text, validation, storage
     revalidate.ts  Website refresh ping

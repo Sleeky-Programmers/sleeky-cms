@@ -30,6 +30,11 @@ const icons = {
             <rect x="3" y="16" width="7" height="5" rx="1.5" />
         </svg>
     ),
+    analytics: (
+        <svg {...iconProps}>
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+        </svg>
+    ),
     insights: (
         <svg {...iconProps}>
             <path d="M6 3h9l4 4v14H6z" />
@@ -69,7 +74,12 @@ type NavSection = { title?: string; items: NavItem[] };
 
 // Add new CMS features here.
 const SECTIONS: NavSection[] = [
-    { items: [{ href: "/", label: "Dashboard", icon: "dashboard" }] },
+    {
+        items: [
+            { href: "/", label: "Dashboard", icon: "dashboard" },
+            { href: "/analytics", label: "Analytics", icon: "analytics" },
+        ],
+    },
     {
         title: "Content",
         items: [
