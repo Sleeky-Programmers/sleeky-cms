@@ -30,6 +30,11 @@ const schema = z.object({
   // Vercel "Protection Bypass for Automation" secret of the website project, so the
   // refresh ping can reach a preview deployment behind Vercel's login.
   WEBSITE_PROTECTION_BYPASS: z.string().min(1).optional(),
+  // Google Analytics 4 for the Analytics page: the numeric property ID and a
+  // service account's JSON key (with Viewer access to the property). Checked by
+  // the Analytics page itself, so a mistake here never stops the CMS from starting.
+  GA4_PROPERTY_ID: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
