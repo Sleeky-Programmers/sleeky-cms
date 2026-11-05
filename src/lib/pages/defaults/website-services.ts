@@ -63,7 +63,7 @@ export const websiteServices: WebsiteService[] = [
     tools: {
       heading: "We work with the tools you already have.",
       body: "No need to replace your systems. We wire them together and fill the gaps with custom software where off-the-shelf tools stop.",
-      items: ["HubSpot", "Zoho Books", "Google Workspace", "Microsoft 365", "Paystack", "Flutterwave", "WhatsApp Business", "Slack", "Airtable", "Excel & Google Sheets"],
+      items: ["Zoho CRM", "Zoho Books", "Google Workspace", "Microsoft 365", "Paystack", "Flutterwave", "WhatsApp Business", "Slack", "Airtable", "Excel & Google Sheets"],
       extra: "+ your custom systems",
     },
     process: {
@@ -139,7 +139,7 @@ export const websiteServices: WebsiteService[] = [
     tools: {
       heading: "Built on tools that grow with you.",
       body: "Modern, fast technology, a content system your team can edit, and analytics wired in from day one.",
-      items: ["Next.js", "React", "Sanity CMS", "Google Analytics 4", "Search Console", "HubSpot", "WhatsApp Business", "Vercel"],
+      items: ["Next.js", "React", "Sanity CMS", "Google Analytics 4", "Search Console", "Zoho CRM", "WhatsApp Business", "Vercel"],
       extra: "+ your existing domain and email",
     },
     process: {
@@ -331,7 +331,7 @@ export const websiteServices: WebsiteService[] = [
     tools: {
       heading: "We integrate with the services your business runs on.",
       body: "Payment, banking, messaging and business tools used in Nigeria and internationally — plus custom APIs where none exist.",
-      items: ["Paystack", "Flutterwave", "Monnify", "Mono", "Termii", "WhatsApp Business API", "HubSpot", "Zoho Books", "QuickBooks", "Google Sheets"],
+      items: ["Paystack", "Flutterwave", "Monnify", "Mono", "Termii", "WhatsApp Business API", "Zoho CRM", "Zoho Books", "QuickBooks", "Google Sheets"],
       extra: "+ any service with an API",
     },
     process: {
