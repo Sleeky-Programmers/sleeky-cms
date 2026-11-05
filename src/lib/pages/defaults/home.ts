@@ -134,7 +134,7 @@ export const homeDefaults: PageValues = {
     buttonLabel: "Try it — start a project",
     steps: [
       { title: "Project brief submitted", detail: "Service, goals, timeline and any attached brief", time: "0s" },
-      { title: "Lead created in Zoho CRM", detail: "Brief, attachment and owner recorded", time: "2s" },
+      { title: "Contact and deal created in Zoho CRM", detail: "Brief, attachment and owner recorded", time: "2s" },
       { title: "Team alerted by email", detail: "Lead owner notified straight away", time: "4s" },
       { title: "Branded confirmation sent", detail: "“We’ll be in touch within 24 hours”", time: "5s" },
     ],
