@@ -35,6 +35,9 @@ const schema = z.object({
   // the Analytics page itself, so a mistake here never stops the CMS from starting.
   GA4_PROPERTY_ID: z.string().optional(),
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  // Comma-separated website domains the Analytics page counts (the property also
+  // receives other apps' and test traffic). Defaults to the live website.
+  GA4_HOSTNAMES: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

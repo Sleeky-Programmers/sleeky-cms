@@ -75,6 +75,15 @@ const eventIs = (...names: string[]) =>
     ? { filter: { fieldName: "eventName", stringFilter: { value: names[0] } } }
     : { filter: { fieldName: "eventName", inListFilter: { values: names } } };
 
+/**
+ * Limits a report to the website's own domains. The GA4 property also receives
+ * other apps' data (another data stream) and test traffic (localhost, previews).
+ */
+export function onlyWebsite(config: AnalyticsConfig, body: ReportRequest): ReportRequest {
+  const hosts = { filter: { fieldName: "hostName", inListFilter: { values: config.hostnames } } };
+  return { ...body, dimensionFilter: body.dimensionFilter ? { andGroup: { expressions: [hosts, body.dimensionFilter] } } : hosts };
+}
+
 /** With two date ranges, GA adds a "dateRange" dimension (date_range_0 = first range). */
 function splitByDateRange(report: Report) {
   const index = report.dimensionHeaders.indexOf("dateRange");
@@ -110,17 +119,19 @@ async function section<T>(load: () => Promise<T>): Promise<Section<T>> {
 
 export async function buildDashboard(config: AnalyticsConfig, range: RangeKey): Promise<Dashboard> {
   const { current, previous } = dateRanges(range);
-  const report = (body: ReportRequest) => runReport(config, { dateRanges: [current], ...body });
+  // Every report counts only the website's own domains (see onlyWebsite).
+  const run = (body: ReportRequest) => runReport(config, onlyWebsite(config, body));
+  const report = (body: ReportRequest) => run({ dateRanges: [current], ...body });
   const limit = (count: number) => ({ limit: count });
 
   const [totals, trend, pages, channels, sources, devices, countries, events, contactClicks, buttons, funnel, scroll] = await Promise.all([
     section(async () => {
       const [main, briefs] = await Promise.all([
-        runReport(config, {
+        run({
           dateRanges: [current, previous],
           metrics: ["activeUsers", "newUsers", "sessions", "screenPageViews", "averageSessionDuration", "engagementRate"].map(metric),
         }),
-        runReport(config, { dateRanges: [current, previous], metrics: [metric("eventCount")], dimensionFilter: eventIs("generate_lead") }),
+        run({ dateRanges: [current, previous], metrics: [metric("eventCount")], dimensionFilter: eventIs("generate_lead") }),
       ]);
       const mainRows = splitByDateRange(main);
       const briefRows = splitByDateRange(briefs);
@@ -246,11 +257,32 @@ export async function buildDashboard(config: AnalyticsConfig, range: RangeKey): 
   return { range, fetchedAt: new Date().toISOString(), totals, trend, pages, channels, sources, devices, countries, events, contactClicks, buttons, funnel, scroll };
 }
 
-export async function buildRealtime(config: AnalyticsConfig): Promise<Realtime> {
+/**
+ * The website's data stream, found from the website's own recent traffic. Live
+ * reports can't filter by domain, but they can by stream, which leaves out other
+ * apps sending to the same property.
+ */
+export async function websiteStreamId(config: AnalyticsConfig): Promise<string | undefined> {
+  const streams = await runReport(
+    config,
+    onlyWebsite(config, {
+      dateRanges: [{ startDate: "89daysAgo", endDate: "today" }],
+      dimensions: [dimension("streamId")],
+      metrics: [metric("eventCount")],
+      orderBys: [byMetricDesc("eventCount")],
+      limit: 1,
+    }),
+  );
+  return streams.rows[0]?.dimensions[0];
+}
+
+export async function buildRealtime(config: AnalyticsConfig, streamId?: string): Promise<Realtime> {
+  const live = (body: ReportRequest) =>
+    runRealtimeReport(config, streamId ? { ...body, dimensionFilter: { filter: { fieldName: "streamId", stringFilter: { value: streamId } } } } : body);
   const [total, pages, countries] = await Promise.all([
-    runRealtimeReport(config, { metrics: [metric("activeUsers")] }),
-    runRealtimeReport(config, { dimensions: [dimension("unifiedScreenName")], metrics: [metric("activeUsers")], orderBys: [byMetricDesc("activeUsers")], limit: 8 }),
-    runRealtimeReport(config, { dimensions: [dimension("country")], metrics: [metric("activeUsers")], orderBys: [byMetricDesc("activeUsers")], limit: 5 }),
+    live({ metrics: [metric("activeUsers")] }),
+    live({ dimensions: [dimension("unifiedScreenName")], metrics: [metric("activeUsers")], orderBys: [byMetricDesc("activeUsers")], limit: 8 }),
+    live({ dimensions: [dimension("country")], metrics: [metric("activeUsers")], orderBys: [byMetricDesc("activeUsers")], limit: 5 }),
   ]);
   return {
     fetchedAt: new Date().toISOString(),
@@ -287,5 +319,8 @@ export function getDashboard(range: RangeKey) {
 
 export function getRealtime() {
   const config = analyticsConfig();
-  return cached(`realtime:${config.propertyId}`, REALTIME_TTL, () => buildRealtime(config));
+  return cached(`realtime:${config.propertyId}`, REALTIME_TTL, async () => {
+    const streamId = await cached(`stream:${config.propertyId}:${config.hostnames.join(",")}`, 6 * 60 * 60_000, () => websiteStreamId(config));
+    return buildRealtime(config, streamId);
+  });
 }

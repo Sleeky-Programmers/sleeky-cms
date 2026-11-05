@@ -34,6 +34,14 @@ describe("settings", () => {
     expect(() => analyticsConfig()).toThrow(expect.objectContaining({ code: "not-configured" }));
   });
 
+  it("counts the live website's domains unless GA4_HOSTNAMES says otherwise", () => {
+    settings.GA4_HOSTNAMES = undefined;
+    expect(analyticsConfig().hostnames).toEqual(["www.sleekyprogrammers.com", "sleekyprogrammers.com"]);
+    settings.GA4_HOSTNAMES = " Example.com , www.example.com ,";
+    expect(analyticsConfig().hostnames).toEqual(["example.com", "www.example.com"]);
+    settings.GA4_HOSTNAMES = undefined;
+  });
+
   it("explains when the G-… measurement ID is used instead of the property ID", () => {
     settings.GA4_PROPERTY_ID = "G-ZE8VEQX7MV";
     expect(() => analyticsConfig()).toThrow(/measurement ID \(G-ZE8VEQX7MV\).*numeric Property ID/);
@@ -62,7 +70,7 @@ describe("Google sign-in and reports", () => {
       return json(gaRows(["country"], ["activeUsers"], [[["Nigeria"], [42]]]));
     }) as unknown as typeof fetch;
 
-    const config = { propertyId: "123456789", account: parseServiceAccount(JSON.stringify({ ...keyFile, client_email: "signer@test.iam" })) };
+    const config = { propertyId: "123456789", hostnames: [], account: parseServiceAccount(JSON.stringify({ ...keyFile, client_email: "signer@test.iam" })) };
     const report = await runReport(config, { metrics: [{ name: "activeUsers" }], dimensions: [{ name: "country" }] });
     expect(report.rows).toEqual([{ dimensions: ["Nigeria"], metrics: [42] }]);
 
@@ -79,7 +87,7 @@ describe("Google sign-in and reports", () => {
   });
 
   it("explains missing access and unregistered custom dimensions", async () => {
-    const config = { propertyId: "123", account: parseServiceAccount(JSON.stringify({ ...keyFile, client_email: "errors@test.iam" })) };
+    const config = { propertyId: "123", hostnames: [], account: parseServiceAccount(JSON.stringify({ ...keyFile, client_email: "errors@test.iam" })) };
     const respond = (status: number, message: string) =>
       (global.fetch = vi.fn(async (input: string | URL | Request) =>
         String(input).includes("oauth2") ? json({ access_token: "t", expires_in: 3600 }) : json({ error: { message } }, status),
@@ -113,12 +121,15 @@ describe("the dashboard", () => {
 
   it("builds every section from the reports, and keeps going when custom dimensions are missing", async () => {
     const today = dayKey(new Date());
+    const hostFilters: unknown[] = [];
     global.fetch = vi.fn(async (input: string | URL | Request, init: RequestInit = {}) => {
       if (String(input).includes("oauth2")) return json({ access_token: "t", expires_in: 3600 });
       const body = JSON.parse(String(init.body));
       const dims: string[] = (body.dimensions ?? []).map((d: { name: string }) => d.name);
       const metrics: string[] = body.metrics.map((m: { name: string }) => m.name);
-      const event = body.dimensionFilter?.filter?.stringFilter?.value;
+      const filters = body.dimensionFilter?.andGroup?.expressions ?? [body.dimensionFilter];
+      hostFilters.push(filters[0]);
+      const event = filters[1]?.filter?.stringFilter?.value;
       if (dims.some((name) => name.startsWith("customEvent:")) && !dims.includes("customEvent:step_name")) {
         return json({ error: { message: `Field ${dims.find((n) => n.startsWith("customEvent:"))} is not a valid dimension.` } }, 400);
       }
@@ -135,7 +146,7 @@ describe("the dashboard", () => {
       return json(gaRows(dims, metrics, [[["Organic Search"], [80]]]));
     }) as unknown as typeof fetch;
 
-    const config = { propertyId: "123", account: parseServiceAccount(JSON.stringify({ ...keyFile, client_email: "dashboard@test.iam" })) };
+    const config = { propertyId: "123", hostnames: ["www.sleekyprogrammers.com"], account: parseServiceAccount(JSON.stringify({ ...keyFile, client_email: "dashboard@test.iam" })) };
     const dashboard = await buildDashboard(config, "7d");
 
     expect(dashboard.totals).toEqual({
@@ -157,6 +168,9 @@ describe("the dashboard", () => {
     // Reports that need the custom dimensions say so instead of failing the page.
     expect(dashboard.buttons).toEqual({ ok: false, needsDimensions: true, message: expect.stringContaining("custom dimensions") });
     expect(dashboard.scroll.ok).toBe(false);
+    // Every report counts only the website's domain (the property is shared with other apps).
+    expect(hostFilters.length).toBeGreaterThan(10);
+    for (const filter of hostFilters) expect(filter).toEqual({ filter: { fieldName: "hostName", inListFilter: { values: ["www.sleekyprogrammers.com"] } } });
     // Missing custom dimensions don't stop the dashboard being kept; other failures do.
     expect(isComplete(dashboard)).toBe(true);
     expect(isComplete({ ...dashboard, pages: { ok: false, message: "Network error" } })).toBe(false);

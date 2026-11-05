@@ -20,11 +20,14 @@ export class AnalyticsError extends Error {
 
 type ServiceAccount = { client_email: string; private_key: string };
 
-export type AnalyticsConfig = { propertyId: string; account: ServiceAccount };
+/** Hosts the Analytics page counts, so other apps and test sites sharing the property are left out. */
+export const DEFAULT_HOSTNAMES = ["www.sleekyprogrammers.com", "sleekyprogrammers.com"];
+
+export type AnalyticsConfig = { propertyId: string; account: ServiceAccount; hostnames: string[] };
 
 /** Reads and checks the settings; throws an AnalyticsError that says what to fix. */
 export function analyticsConfig(): AnalyticsConfig {
-  const { GA4_PROPERTY_ID, GOOGLE_SERVICE_ACCOUNT_JSON } = env();
+  const { GA4_PROPERTY_ID, GOOGLE_SERVICE_ACCOUNT_JSON, GA4_HOSTNAMES } = env();
   if (!GA4_PROPERTY_ID || !GOOGLE_SERVICE_ACCOUNT_JSON) {
     throw new AnalyticsError("Google Analytics isn't connected yet.", "not-configured");
   }
@@ -37,7 +40,11 @@ export function analyticsConfig(): AnalyticsConfig {
       "bad-property",
     );
   }
-  return { propertyId, account: parseServiceAccount(GOOGLE_SERVICE_ACCOUNT_JSON) };
+  const hostnames = (GA4_HOSTNAMES ?? "")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+  return { propertyId, account: parseServiceAccount(GOOGLE_SERVICE_ACCOUNT_JSON), hostnames: hostnames.length ? hostnames : DEFAULT_HOSTNAMES };
 }
 
 /** Accepts the key file's JSON as is, or base64-encoded (easier to paste into some dashboards). */

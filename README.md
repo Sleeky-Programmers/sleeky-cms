@@ -118,6 +118,8 @@ After a save or reset, the CMS POSTs `{ "type": "pages", "slugs": ["<key>"] }` t
 
    Google only collects them from the moment they're created, so do this early. Until then those reports say what's missing and the rest of the page works.
 
+**Only the live website is counted.** The same GA4 property also receives another app's data stream (Straitpay) and test traffic (localhost, Vercel previews), so every report is limited to `www.sleekyprogrammers.com` and `sleekyprogrammers.com`, and "Right now" to the website's data stream. Set `GA4_HOSTNAMES` (comma-separated) if the domain changes.
+
 The website sends these events (sleeky-website `src/lib/analytics.ts`): `button_click`, `scroll_depth`, `whatsapp_click`, `phone_click`, `email_click`, `form_step`, `file_upload` and `generate_lead` (a brief sent).
 
 ## Environment variables
@@ -133,6 +135,7 @@ See [`.env.example`](.env.example). Summary:
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For images | Image uploads (Cloudinary console > Settings > API Keys). Files go to `sleeky-cms/insights`, `sleeky-cms/case-studies` or `sleeky-cms/pages` |
 | `WEBSITE_REVALIDATE_URL`, `REVALIDATE_SECRET` | No | Refresh the website as soon as articles, case studies or pages change (see above). Use a stable address (live domain or branch alias), not a one-off deployment URL |
 | `GA4_PROPERTY_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON` | For Analytics | The numeric GA4 property ID and a service account's JSON key with Viewer access (see Analytics) |
+| `GA4_HOSTNAMES` | No | Website domains the Analytics page counts; defaults to `www.sleekyprogrammers.com,sleekyprogrammers.com` |
 | `WEBSITE_PROTECTION_BYPASS` | For preview websites | The website project's Vercel *Protection Bypass for Automation* secret, so pings get past Vercel's login on previews. Failed pings are logged with the reason |
 | `MONGODB_DNS_SERVERS` | No | Only for machines whose DNS refuses `mongodb+srv` lookups (`querySrv ECONNREFUSED`), e.g. `1.1.1.1,8.8.8.8` |
 | `MONGODB_DB` | No | Overrides the database name (used by tests) |

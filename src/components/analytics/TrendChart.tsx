@@ -84,7 +84,11 @@ export function TrendChart({ points }: { points: Point[] }) {
                     );
                 })}
                 {/* Briefs per day, a separate small chart below */}
-                <text x={PAD.left - 8} y={HEIGHT + 14} textAnchor="end" fontSize="11" fill="var(--color-faint)">{briefMax}</text>
+                {points.some((point) => point.briefs) ? (
+                    <text x={PAD.left - 8} y={HEIGHT + 14} textAnchor="end" fontSize="11" fill="var(--color-faint)">{briefMax}</text>
+                ) : (
+                    <text x={PAD.left} y={HEIGHT + BRIEFS_HEIGHT - 14} fontSize="12" fill="var(--color-faint)">No briefs sent in this period</text>
+                )}
                 <line x1={PAD.left} x2={WIDTH - PAD.right} y1={HEIGHT + BRIEFS_HEIGHT - 4} y2={HEIGHT + BRIEFS_HEIGHT - 4} stroke="var(--color-line)" strokeWidth="1" />
                 {points.map((point, index) => {
                     if (!point.briefs) return null;
@@ -128,7 +132,7 @@ export function TrendChart({ points }: { points: Point[] }) {
                     style={{ left: `clamp(0px, calc(${(x(active) / WIDTH) * 100}% - 70px), calc(100% - 150px))` }}
                 >
                     <p className="font-semibold text-white">{format(hovered.date, fullDay)}</p>
-                    <p className="text-soft">{hovered.visitors.toLocaleString()} visitors</p>
+                    <p className="text-soft">{hovered.visitors.toLocaleString()} {hovered.visitors === 1 ? "visitor" : "visitors"}</p>
                     <p className="text-soft">{hovered.briefs.toLocaleString()} {hovered.briefs === 1 ? "brief" : "briefs"} sent</p>
                 </div>
             )}
