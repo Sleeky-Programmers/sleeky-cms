@@ -130,13 +130,13 @@ export const homeDefaults: PageValues = {
   automation: {
     eyebrow: "Automation, live",
     heading: "This website runs on what we sell.",
-    body: "Start a project and watch our own automation take over: your request lands in our CRM, the right person is alerted on WhatsApp and you get a confirmation — in seconds, with nobody copying and pasting.",
+    body: "Start a project and watch our own automation take over: your brief lands in our CRM, opens in WhatsApp ready for you to send if that's how you'd like to talk, and you get a confirmation — in seconds, with nobody copying and pasting.",
     buttonLabel: "Try it — start a project",
     steps: [
-      { title: "Project brief submitted", detail: "Service, goals, timeline and any attached brief", time: "0s" },
-      { title: "Contact and deal created in Zoho CRM", detail: "Brief, attachment and owner recorded", time: "2s" },
-      { title: "Team alerted by email", detail: "Lead owner notified straight away", time: "4s" },
-      { title: "Branded confirmation sent", detail: "“We’ll be in touch within 24 hours”", time: "5s" },
+      { title: "Project brief submitted", detail: "Number checked, any file stored securely", time: "0s" },
+      { title: "Contact and deal created in Zoho CRM", detail: "Brief and file saved to the lead", time: "1s" },
+      { title: "WhatsApp chat, ready to send", detail: "Choose WhatsApp and your brief is typed out for you", time: "2s" },
+      { title: "Branded confirmation sent", detail: "By email: “We’ll be in touch within 24 hours”", time: "3s" },
     ],
   },
   process: {
